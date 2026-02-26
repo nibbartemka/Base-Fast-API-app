@@ -5,10 +5,10 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class EmployeeBase(BaseModel):
-    full_name: str = Field(...,
-                           min_length=1,
-                           max_length=200,
-                           description="Полное имя сотрудника")
+    name: str = Field(...,
+                      min_length=1,
+                      max_length=200,
+                      description="Полное имя сотрудника")
     position: str = Field(...,
                           min_length=1,
                           max_length=200,

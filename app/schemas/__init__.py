@@ -1,7 +1,8 @@
 from .department import (DepartmentResponse,
                          DepartmentCreate,
                          DepartmentDetailResponse,
-                         DepartmentUpdate)
+                         DepartmentUpdate,
+                         DepartmentDetailParams)
 from .employee import (EmployeeCreate,
                        EmployeeResponse,
                        EmployeeUpdate)
