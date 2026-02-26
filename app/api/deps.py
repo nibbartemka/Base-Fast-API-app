@@ -5,12 +5,14 @@ from fastapi import Depends, Path, status, HTTPException
 
 from app.core import get_async_session
 from app.models import Department
-from app.schemas import DepartmentDetailParams
+from app.schemas import (DepartmentDetailParams,
+                         DepartmentDeleteParams)
 from .crud import get_department_by_id
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 DepDetailParams = Annotated[DepartmentDetailParams, Depends()]
+DepDeleteParams = Annotated[DepartmentDeleteParams, Depends()]
 
 
 async def get_department_or_404(
