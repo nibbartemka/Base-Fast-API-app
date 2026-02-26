@@ -1,9 +1,13 @@
+from typing import Optional, List
+from datetime import datetime
+from enum import StrEnum
+
 from pydantic import (BaseModel,
                       Field,
                       ConfigDict,
-                      field_validator)
-from typing import Optional, List
-from datetime import datetime
+                      field_validator,
+                      model_validator)
+
 from app.schemas.employee import EmployeeResponse
 
 
@@ -12,6 +16,11 @@ class TrimNameMixin:
     @classmethod
     def trim_name(cls, v: Optional[str]) -> Optional[str]:
         return v.strip() if v else v
+
+
+class DeleteModes(StrEnum):
+    CASCADE = "cascade"
+    REASSIGN = "reassign"
 
 
 class DepartmentBase(BaseModel):
@@ -99,6 +108,33 @@ class DepartmentDetailResponse(DepartmentResponse):
             }
         }
     )
+
+
+class DepartmentDeleteParams(BaseModel):
+    mode: DeleteModes = Field(
+        default=...,
+        description="Тип удаления",
+        examples=["cascade", "reassign"],
+    )
+    reassign_to_deparment_id: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Id департамента, к которому будут переназначен персонал",
+        examples=[None, 1, 2],
+    )
+
+    @model_validator('after')
+    def validate_dep_id_based_on_mode(self) -> 'DepartmentDeleteParams':
+        if (self.mode == DeleteModes.REASSIGN
+           and self.reassign_to_deparment_id is None):
+            raise ValueError("При mode=reassign необходимо "
+                             "указать reassign_to_deparment_id")
+        if (self.mode == DeleteModes.CASCADE
+           and self.reassign_to_deparment_id):
+            raise ValueError("При mode=cascade нельзя указывать "
+                             "reassign_to_deparment_id отличное от None")
+
+        return self
 
 
 class DepartmentDetailParams(BaseModel):
