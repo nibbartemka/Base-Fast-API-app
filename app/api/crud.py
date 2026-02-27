@@ -3,7 +3,7 @@ from sqlalchemy.orm import Query, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Department, Employee
-from app.schemas import DepartmentDetailResponse, DeleteModes
+from app.schemas import DepartmentDetailResponse
 
 
 async def get_department_by_id(
