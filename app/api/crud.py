@@ -1,9 +1,9 @@
-from sqlalchemy import select, CTE, Integer, func
+from sqlalchemy import select, CTE, Integer, func, update, delete
 from sqlalchemy.orm import Query, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Department
-from app.schemas import DepartmentDetailResponse
+from app.models import Department, Employee
+from app.schemas import DepartmentDetailResponse, DeleteModes
 
 
 async def get_department_by_id(
@@ -142,3 +142,71 @@ async def check_cycle(
         current_id = parent.parent_id
 
     return False
+
+
+async def delete_department_cascade(
+    existing_department: Department,
+    session: AsyncSession
+) -> None:
+    await session.delete(existing_department)
+    await session.commit()
+
+
+# async def delete_department_reassign(
+#     target_department: Department | None,
+#     existing_department: Department,
+#     session: AsyncSession
+# ) -> None:
+#     if target_department and target_department.id == existing_department.id:
+#         raise ValueError("Невозможно переместить в тот же самый департамент")
+
+#     sub_deps_to_reassign = (dep for dep in existing_department.sub_deps)
+#     employees_to_reassign = (emp for emp in existing_department.employees)
+
+#     parent = existing_department.parent
+
+#     for employee in employees_to_reassign:
+#         employee.department = target_department
+
+#     for sub_dep in sub_deps_to_reassign:
+#         sub_dep.parent = parent
+
+#     await session.flush()
+
+#     await session.delete(existing_department)
+#     await session.commit()
+
+async def delete_department_reassign(
+    target_department: Department | None,
+    existing_department: Department,
+    session: AsyncSession
+) -> None:
+    if target_department and target_department.id == existing_department.id:
+        raise ValueError("Невозможно переместить в тот же самый департамент")
+
+    sub_dep_ids = (sub_dep.id for sub_dep in existing_department.sub_deps)
+    employee_ids = (emp.id for emp in existing_department.employees)
+
+    if sub_dep_ids:
+        new_parent_id = existing_department.parent.id if existing_department.parent else None
+
+        await session.execute(
+            update(Department)
+            .where(Department.id.in_(sub_dep_ids))
+            .values(parent_id=new_parent_id)
+        )
+
+    if employee_ids and target_department:
+        await session.execute(
+            update(Employee)
+            .where(Employee.id.in_(employee_ids))
+            .values(department_id=target_department.id)
+        )
+
+    await session.flush()
+
+    await session.execute(
+        delete(Department)
+        .where(Department.id == existing_department.id)
+    )
+    await session.commit()
