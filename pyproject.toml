@@ -10,6 +10,7 @@ dependencies = [
     "black>=26.1.0",
     "fastapi>=0.129.0",
     "greenlet>=3.3.1",
+    "httpx>=0.28.1",
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.13.1",
     "pytest>=9.0.2",
