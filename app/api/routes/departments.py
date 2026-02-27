@@ -9,13 +9,18 @@ from app.schemas import (DepartmentResponse,
                          DepartmentUpdate,
                          DepartmentDetailResponse,
                          EmployeeCreate,
-                         EmployeeResponse)
+                         EmployeeResponse,
+                         DeleteModes)
 from app.models import Department, Employee
 from app.api.deps import (ExistingDepartment,
                           DepDetailParams,
+                          DepDeleteParams,
+                          ExistingDepartmentFull,
                           SessionDep)
 from app.api.crud import (check_cycle, get_department_by_id,
-                          get_detailed_department)
+                          get_detailed_department,
+                          delete_department_cascade,
+                          delete_department_reassign)
 
 
 router: APIRouter = APIRouter(prefix="/departments",
@@ -148,3 +153,20 @@ async def update_department(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка при обновлении"
         ) from e
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_department(
+    existing_department: ExistingDepartmentFull,
+    delete_params: DepDeleteParams,
+    session: SessionDep,
+) -> None:
+    if delete_params.mode == DeleteModes.CASCADE:
+        await delete_department_cascade(existing_department,
+                                        session)
+    elif delete_params.mode == DeleteModes.REASSIGN:
+        target_dep_id = delete_params.reassign_to_deparment_id
+        target_dep = await get_department_by_id(target_dep_id, session)
+        await delete_department_reassign(target_dep,
+                                         existing_department,
+                                         session)
