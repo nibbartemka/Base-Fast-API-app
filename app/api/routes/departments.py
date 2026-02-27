@@ -161,12 +161,18 @@ async def delete_department(
     delete_params: DepDeleteParams,
     session: SessionDep,
 ) -> None:
-    if delete_params.mode == DeleteModes.CASCADE:
-        await delete_department_cascade(existing_department,
-                                        session)
-    elif delete_params.mode == DeleteModes.REASSIGN:
-        target_dep_id = delete_params.reassign_to_deparment_id
-        target_dep = await get_department_by_id(target_dep_id, session)
-        await delete_department_reassign(target_dep,
-                                         existing_department,
-                                         session)
+    try:
+        if delete_params.mode == DeleteModes.CASCADE:
+            await delete_department_cascade(existing_department,
+                                            session)
+        elif delete_params.mode == DeleteModes.REASSIGN:
+            target_dep_id = delete_params.reassign_to_deparment_id
+            target_dep = await get_department_by_id(target_dep_id, session)
+            await delete_department_reassign(target_dep,
+                                             existing_department,
+                                             session)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка на сервере"
+        ) from e
