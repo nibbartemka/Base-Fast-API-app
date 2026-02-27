@@ -2,6 +2,8 @@ from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, Path, status, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core import get_async_session
 from app.models import Department
@@ -34,4 +36,27 @@ async def get_department_or_404(
     return dep
 
 
+async def get_department_with_relations_or_404(
+    session: SessionDep,
+    id: int = Path(..., ge=1, description="Идентификатор департамента")
+) -> Department:
+    stmt = (
+        select(Department)
+        .where(Department.id == id)
+        .options(
+            selectinload(Department.employees),
+            selectinload(Department.sub_deps),
+            selectinload(Department.parent),
+        )
+    )
+    result = await session.execute(stmt)
+    dep = result.scalar_one_or_none()
+    if dep is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Департамент с id {id} не найден"
+        )
+    return dep
+
+ExistingDepartmentFull = Annotated[Department, Depends(get_department_with_relations_or_404)]
 ExistingDepartment = Annotated[Department, Depends(get_department_or_404)]
