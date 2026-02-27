@@ -10,7 +10,8 @@ async def get_department_by_id(
     id: int,
     session: AsyncSession,
     include_employees: bool = False,
-    include_sub_deps: bool = False
+    include_sub_deps: bool = False,
+    include_parent: bool = False
 ) -> Department | None:
     options = []
 
@@ -18,6 +19,8 @@ async def get_department_by_id(
         options.append(selectinload(Department.employees))
     if include_sub_deps:
         options.append(selectinload(Department.sub_deps))
+    if include_parent:
+        options.append(selectinload(Department.parent))
 
     query = (
         select(Department)
@@ -128,7 +131,11 @@ async def check_cycle(
     session: AsyncSession
 ) -> bool:
     current_id = new_parent_id
-    current = await get_department_by_id(new_parent_id, session)
+    current = await get_department_by_id(
+        new_parent_id,
+        session,
+        include_parent=True
+    )
 
     while current_id:
         if current_id == department_id:
@@ -139,7 +146,7 @@ async def check_cycle(
         if parent is None:
             break
 
-        current_id = parent.parent_id
+        current_id = current.parent.id
 
     return False
 
