@@ -3,7 +3,8 @@ from .department import (DepartmentResponse,
                          DepartmentDetailResponse,
                          DepartmentUpdate,
                          DepartmentDeleteParams,
-                         DepartmentDetailParams)
+                         DepartmentDetailParams,
+                         DeleteModes)
 from .employee import (EmployeeCreate,
                        EmployeeResponse,
                        EmployeeUpdate)

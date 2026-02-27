@@ -123,7 +123,7 @@ class DepartmentDeleteParams(BaseModel):
         examples=[None, 1, 2],
     )
 
-    @model_validator('after')
+    @model_validator(mode='after')
     def validate_dep_id_based_on_mode(self) -> 'DepartmentDeleteParams':
         if (self.mode == DeleteModes.REASSIGN
            and self.reassign_to_deparment_id is None):
