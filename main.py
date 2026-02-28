@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 
 from app import create_app
+from app.core import settings
 
 
 app: FastAPI = create_app()
@@ -9,7 +10,7 @@ app: FastAPI = create_app()
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.APP.HOST,
+        port=settings.APP.PORT,
         reload=True
     )

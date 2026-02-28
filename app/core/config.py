@@ -1,7 +1,7 @@
 from enum import StrEnum
 
-from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, BaseModel
 
 
 class EnvironmentTypes(StrEnum):
@@ -9,25 +9,41 @@ class EnvironmentTypes(StrEnum):
     PRODUCTION = "production"
 
 
+class PostgresSettings(BaseModel):
+    HOST: str
+    PORT: int = 5432
+    USER: str
+    PASSWORD: str
+    DB: str
+
+    @property
+    def DSN(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.USER}:{self.PASSWORD}"
+            f"@{self.HOST}:{self.PORT}/{self.DB}"
+        )
+
+
+class AppSettings(BaseModel):
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+
+
 class Settings(BaseSettings):
-    DB_URL: PostgresDsn = Field(
-        default="postgresql://postgres:postgres@localhost:5432/db",
-        description="URL для подключения к БД"
-    )
+    APP: AppSettings
+
+    POSTGRES: PostgresSettings
 
     ENVIRONMENT: EnvironmentTypes = Field(
         default=EnvironmentTypes.DEVELOPMENT,
         description="Тип среды разработки"
     )
 
-    @property
-    def ASYNC_DB_URL(self) -> str:
-        return str(self.DB_URL).replace(
-            "postgresql://", "postgresql+asyncpg://"
-        )
-
-    class Config:
-        env_file = '.env'
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_nested_delimiter='__',
+        env_file_encoding='utf-8',
+    )
 
 
 settings: Settings = Settings()

@@ -11,14 +11,13 @@ from sqlalchemy.orm import declarative_base
 from .config import settings
 
 
-# Создаем ассинхроный engine
 async_engine: AsyncEngine = create_async_engine(
-    settings.ASYNC_DB_URL,
+    settings.POSTGRES.DSN,
     pool_size=5,
     max_overflow=10,
 )
 
-# Задаем фабрику для ассинхронных сессий со своими параметрами
+
 AsyncSessionLocal: async_sessionmaker = async_sessionmaker(
     async_engine,
     class_=AsyncSession,
@@ -28,7 +27,6 @@ AsyncSessionLocal: async_sessionmaker = async_sessionmaker(
 )
 
 
-# Базовый класс для моделей
 Base = declarative_base()
 
 
